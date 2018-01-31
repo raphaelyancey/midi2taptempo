@@ -9,6 +9,8 @@ byte midi_clock = 0xf8;
 byte midi_continue = 0xfb;
 int play_flag = 0;
 byte data;
+int tick_counter = 0;
+int quarter_note = 0;
 
 void setup() {
   Serial.begin(31250);
@@ -16,7 +18,9 @@ void setup() {
 
 void loop() {
   if(Serial.available() > 0) {
+    
     data = Serial.read();
+    
     if(data == midi_start) {
       play_flag = 1;
     }
@@ -27,14 +31,26 @@ void loop() {
       play_flag = 0;
     }
     else if((data == midi_clock) && (play_flag == 1)) {
-      Sync();
+
+      tick_counter++;
+      
+      // A quarter note == 24 MIDI ticks
+      if(tick_counter == 24) {
+        quarter_note++;
+        tick_counter = 0;
+      }
+
+      // 4 quarter notes = 1 beat
+      if(quarter_note == 4) {
+        beat();
+        quarter_note = 0;
+      }
     }
   }
 }
 
-void Sync() {
+void beat() {
   digitalWrite(13, HIGH);
-  delay(10);
+  delay(100);
   digitalWrite(13, LOW);
-  delay(10);
 }
