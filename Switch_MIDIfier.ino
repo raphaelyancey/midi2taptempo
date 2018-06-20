@@ -11,7 +11,9 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial, MIDI);
 void setup() 
 {
   pinMode(PIN_LED_TEMPO, OUTPUT);
+  pinMode(2, OUTPUT);
   digitalWrite(PIN_LED_TEMPO, HIGH);
+  digitalWrite(PIN_LED_TEMPO, LOW);
   
 #if 1
   MIDI.begin(MIDI_CHANNEL_OMNI);
@@ -34,10 +36,12 @@ void loop()
         else if(ticks > 1 && ticks < 6)
         {
           digitalWrite(PIN_LED_TEMPO, HIGH);
+          digitalWrite(2, HIGH);
         }
         else if(ticks == 6)
         {
           digitalWrite(PIN_LED_TEMPO, LOW);
+          digitalWrite(2, LOW);
         }
         else if(ticks >= 24)
         {
