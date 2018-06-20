@@ -1,56 +1,47 @@
-/*
- * Original code by Little-Scale
- * https://little-scale.blogspot.fr/2008/05/how-to-deal-with-midi-clock-signals-in.html
- */
+/* Sampled from https://github.com/sparkfun/MIDI_Shield/blob/V_1.5/Firmware/clock-recv/clock-recv.ino */
 
-byte midi_start = 0xfa;
-byte midi_stop = 0xfc;
-byte midi_clock = 0xf8;
-byte midi_continue = 0xfb;
-int play_flag = 0;
-byte data;
-int tick_counter = 0;
-int quarter_note = 0;
+#include <SoftwareSerial.h>
+#include <MsTimer2.h>
+#include <MIDI.h>
 
-void setup() {
-  Serial.begin(31250);
+#define PIN_LED_TEMPO 13
+
+MIDI_CREATE_INSTANCE(HardwareSerial, Serial, MIDI);
+
+void setup() 
+{
+  pinMode(PIN_LED_TEMPO, OUTPUT);
+  digitalWrite(PIN_LED_TEMPO, HIGH);
+  
+#if 1
+  MIDI.begin(MIDI_CHANNEL_OMNI);
+  MIDI.turnThruOff();
+#endif  
+
 }
 
-void loop() {
-  if(Serial.available() > 0) {
-    
-    data = Serial.read();
-    
-    if(data == midi_start) {
-      play_flag = 1;
-    }
-    else if(data == midi_continue) {
-      play_flag = 1;
-    }
-    else if(data == midi_stop) {
-      play_flag = 0;
-    }
-    else if((data == midi_clock) && (play_flag == 1)) {
-
-      tick_counter++;
-      
-      // A quarter note == 24 MIDI ticks
-      if(tick_counter == 24) {
-        quarter_note++;
-        tick_counter = 0;
-      }
-
-      // 4 quarter notes = 1 beat
-      if(quarter_note == 4) {
-        beat();
-        quarter_note = 0;
-      }
-    }
+void loop() 
+{  
+  // 1 MIDI beat = 6 ticks = 16th note
+  // 1 "real" beat = 24 ticks
+  static uint8_t  ticks = 0;
+  if(MIDI.read() && MIDI.getType() == midi::Clock)
+  {
+        ticks++;
+        if(ticks == 1) {
+          // Do something
+        }
+        else if(ticks > 1 && ticks < 6)
+        {
+          digitalWrite(PIN_LED_TEMPO, HIGH);
+        }
+        else if(ticks == 6)
+        {
+          digitalWrite(PIN_LED_TEMPO, LOW);
+        }
+        else if(ticks >= 24)
+        {
+          ticks = 0;
+        }
   }
-}
-
-void beat() {
-  digitalWrite(13, HIGH);
-  delay(100);
-  digitalWrite(13, LOW);
 }
